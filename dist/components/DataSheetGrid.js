@@ -454,7 +454,7 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
                 case 0:
                     if (!(!editing && activeCell)) return [3 /*break*/, 15];
                     clipBoardData = (_f = (_e = event.clipboardData) === null || _e === void 0 ? void 0 : _e.getData('text')) !== null && _f !== void 0 ? _f : (_g = event.clipboardData) === null || _g === void 0 ? void 0 : _g.getData('text/plain');
-                    pasteData = clipBoardData ? copyPasting_1.parseData(clipBoardData) : [];
+                    pasteData = clipBoardData ? copyPasting_1.parseData2(clipBoardData) : [];
                     min = (selection === null || selection === void 0 ? void 0 : selection.min) || activeCell;
                     max = (selection === null || selection === void 0 ? void 0 : selection.max) || activeCell;
                     if (!(pasteData.length === 1)) return [3 /*break*/, 7];

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseData = void 0;
+exports.parseData2 = exports.parseData = void 0;
 var parseData = function (data) {
     var cleanData = data.replace(/\r|\n$/g, '');
     var output = [[]];
@@ -56,4 +56,19 @@ var parseData = function (data) {
     return output;
 };
 exports.parseData = parseData;
+var parseData2 = function (data) {
+    var rowsT = data.replace(/"((?:[^"]*(?:\r\n|\n\r|\n|\r))+[^"]+)"/mg, function (match, p1) {
+        // This function runs for each cell with multi lined text.
+        return p1
+            // Replace any double double-quotes with a single
+            // double-quote
+            .replace(/""/g, '"')
+            // Replace all new lines with spaces.
+            .replace(/\r\n|\n\r|\n|\r/g, ' ');
+    });
+    var rows = rowsT === null || rowsT === void 0 ? void 0 : rowsT.split(/\r\n|\n\r|\n|\r/g);
+    var cleanData = (rows === null || rows === void 0 ? void 0 : rows.map(function (row) { return row.split(/\t/g); })) || [];
+    return cleanData;
+};
+exports.parseData2 = parseData2;
 //# sourceMappingURL=copyPasting.js.map

@@ -25,26 +25,28 @@ var react_1 = require("react");
 var useDocumentEventListener_1 = require("../hooks/useDocumentEventListener");
 var renderItem = function (item) {
     if (item.type === 'DELETE_ROW') {
-        return 'Delete row';
+        return '删除行';
     }
     if (item.type === 'DELETE_ROWS') {
         return (React.createElement(React.Fragment, null,
-            "Delete rows ",
+            "\u5220\u9664\u884C ",
             React.createElement("b", null, item.fromRow),
-            " to ",
+            " \u5230 ",
             React.createElement("b", null, item.toRow)));
     }
     if (item.type === 'INSERT_ROW_BELLOW') {
-        return 'Insert row bellow';
+        // return 'Insert row bellow'
+        return '在一行插入行';
     }
     if (item.type === 'DUPLICATE_ROW') {
-        return 'Duplicate row';
+        // return 'Duplicate row'
+        return '复制行';
     }
     if (item.type === 'DUPLICATE_ROWS') {
         return (React.createElement(React.Fragment, null,
-            "Duplicate rows ",
+            "\u590D\u5236\u884C ",
             React.createElement("b", null, item.fromRow),
-            " to ",
+            " \u5230 ",
             React.createElement("b", null, item.toRow)));
     }
     return item.type;

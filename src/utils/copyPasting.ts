@@ -64,3 +64,20 @@ export const parseData = (data: string): string[][] => {
 
   return output
 }
+
+export const parseData2 = (data: string): string[][] => {
+  var rowsT = data.replace(/"((?:[^"]*(?:\r\n|\n\r|\n|\r))+[^"]+)"/mg, function (match, p1) {
+    // This function runs for each cell with multi lined text.
+    return p1
+      // Replace any double double-quotes with a single
+      // double-quote
+      .replace(/""/g, '"')
+      // Replace all new lines with spaces.
+      .replace(/\r\n|\n\r|\n|\r/g, ' ');
+  });
+  var rows = rowsT?.split(/\r\n|\n\r|\n|\r/g);
+  const cleanData = rows?.map((row) => row.split(/\t/g)) || [];
+
+  return cleanData;
+}
+

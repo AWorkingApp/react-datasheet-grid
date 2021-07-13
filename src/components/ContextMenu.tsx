@@ -5,29 +5,33 @@ import { ContextMenuItem, ContextMenuComponentProps } from '../types'
 
 const renderItem = (item: ContextMenuItem) => {
   if (item.type === 'DELETE_ROW') {
-    return 'Delete row'
+    return '删除行'
   }
 
   if (item.type === 'DELETE_ROWS') {
     return (
       <>
-        Delete rows <b>{item.fromRow}</b> to <b>{item.toRow}</b>
+        {/* Delete rows <b>{item.fromRow}</b> to <b>{item.toRow}</b> */}
+        删除行 <b>{item.fromRow}</b> 到 <b>{item.toRow}</b>
       </>
     )
   }
 
   if (item.type === 'INSERT_ROW_BELLOW') {
-    return 'Insert row bellow'
+     // return 'Insert row bellow'
+     return '在一行插入行';
   }
 
   if (item.type === 'DUPLICATE_ROW') {
-    return 'Duplicate row'
+    // return 'Duplicate row'
+    return '复制行';
   }
 
   if (item.type === 'DUPLICATE_ROWS') {
     return (
       <>
-        Duplicate rows <b>{item.fromRow}</b> to <b>{item.toRow}</b>
+        {/* Duplicate rows <b>{item.fromRow}</b> to <b>{item.toRow}</b> */}
+        复制行 <b>{item.fromRow}</b> 到 <b>{item.toRow}</b>
       </>
     )
   }
