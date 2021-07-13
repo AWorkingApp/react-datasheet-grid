@@ -1,0 +1,1 @@
+{"version":3,"file":"useFirstRender.js","sourceRoot":"","sources":["../../src/hooks/useFirstRender.ts"],"names":[],"mappings":";;;AAAA,+BAA8B;AAEvB,IAAM,cAAc,GAAG;IAC5B,IAAM,cAAc,GAAG,cAAM,CAAC,IAAI,CAAC,CAAA;IACnC,IAAM,WAAW,GAAG,cAAc,CAAC,OAAO,CAAA;IAC1C,cAAc,CAAC,OAAO,GAAG,KAAK,CAAA;IAE9B,OAAO,WAAW,CAAA;AACpB,CAAC,CAAA;AANY,QAAA,cAAc,kBAM1B"}
