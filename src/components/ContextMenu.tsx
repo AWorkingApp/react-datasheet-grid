@@ -19,7 +19,7 @@ const renderItem = (item: ContextMenuItem) => {
 
   if (item.type === 'INSERT_ROW_BELLOW') {
      // return 'Insert row bellow'
-     return '在一行插入行';
+     return '在这行后插入行';
   }
 
   if (item.type === 'DUPLICATE_ROW') {
