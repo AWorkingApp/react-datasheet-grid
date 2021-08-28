@@ -7,8 +7,11 @@ export const AddRows = ({ addRows }: AddRowsComponentProps) => {
 
   return (
     <div className="dsg-add-row">
-      <button onClick={() => addRows(value)}>添加</button>{' '}
+      <button className="dsg-add-row-btn" onClick={() => addRows(value)}>
+        添加
+      </button>{' '}
       <input
+        className="dsg-add-row-input"
         value={rawValue}
         onBlur={() => setRawValue(String(value))}
         onChange={(e) => {
