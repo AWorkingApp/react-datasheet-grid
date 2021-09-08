@@ -12,12 +12,13 @@ type Row = {
   active: boolean
   firstName: string | null
   lastName: string | null
+  disabled: boolean
 }
 
 function App() {
   const [data, setData] = useState<Row[]>([
-    { active: true, firstName: 'Elon', lastName: 'Musk' },
-    { active: false, firstName: 'Jeff', lastName: 'Bezos' },
+    { active: true, firstName: 'Elon', lastName: 'Musk', disabled: false, },
+    { active: false, firstName: 'Jeff', lastName: 'Bezos', disabled: true },
   ])
 
   const columns: Column<Row>[] = [
@@ -27,6 +28,9 @@ function App() {
     },
     {
       ...keyColumn<Row, 'firstName'>('firstName', textColumn),
+      disabled: ({ rowData }) => {
+        return rowData.disabled;
+      },
       title: 'First name',
     },
     {

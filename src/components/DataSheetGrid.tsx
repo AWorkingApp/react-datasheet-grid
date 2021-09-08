@@ -959,7 +959,7 @@ export const DataSheetGrid = React.memo(
           ) {
             setSelectionCell(null)
 
-            if (editing) {
+            if (editing || isCellDisabled(activeCell)) {
               if (!columns[activeCell.col + 1].disableKeys) {
                 stopEditing()
               }

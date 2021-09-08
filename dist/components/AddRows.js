@@ -42,9 +42,9 @@ var AddRows = function (_a) {
     var _b = __read(react_1.useState(1), 2), value = _b[0], setValue = _b[1];
     var _c = __read(react_1.useState(String(value)), 2), rawValue = _c[0], setRawValue = _c[1];
     return (react_1.default.createElement("div", { className: "dsg-add-row" },
-        react_1.default.createElement("button", { onClick: function () { return addRows(value); } }, "\u6DFB\u52A0"),
+        react_1.default.createElement("button", { className: "dsg-add-row-btn", onClick: function () { return addRows(value); } }, "\u6DFB\u52A0"),
         ' ',
-        react_1.default.createElement("input", { value: rawValue, onBlur: function () { return setRawValue(String(value)); }, onChange: function (e) {
+        react_1.default.createElement("input", { className: "dsg-add-row-input", value: rawValue, onBlur: function () { return setRawValue(String(value)); }, onChange: function (e) {
                 setRawValue(e.target.value);
                 setValue(Math.max(1, Math.round(parseInt(e.target.value) || 0)));
             }, onKeyPress: function (event) {

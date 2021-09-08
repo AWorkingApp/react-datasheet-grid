@@ -45,7 +45,7 @@ exports.StaticDataSheetGrid = void 0;
 var react_1 = require("react");
 var DataSheetGrid_1 = require("./DataSheetGrid");
 var react_2 = __importDefault(require("react"));
-var StaticDataSheetGrid = function (_a) {
+exports.StaticDataSheetGrid = react_2.default.forwardRef(function (_a, ref) {
     var columns = _a.columns, gutterColumn = _a.gutterColumn, stickyRightColumn = _a.stickyRightColumn, addRowsComponent = _a.addRowsComponent, createRow = _a.createRow, duplicateRow = _a.duplicateRow, isRowEmpty = _a.isRowEmpty, rest = __rest(_a, ["columns", "gutterColumn", "stickyRightColumn", "addRowsComponent", "createRow", "duplicateRow", "isRowEmpty"]);
     var _b = __read(react_1.useState({
         columns: columns,
@@ -56,7 +56,6 @@ var StaticDataSheetGrid = function (_a) {
         duplicateRow: duplicateRow,
         isRowEmpty: isRowEmpty,
     }), 1), staticProps = _b[0];
-    return react_2.default.createElement(DataSheetGrid_1.DataSheetGrid, __assign({}, staticProps, rest));
-};
-exports.StaticDataSheetGrid = StaticDataSheetGrid;
+    return react_2.default.createElement(DataSheetGrid_1.DataSheetGrid, __assign({}, staticProps, rest, { ref: ref }));
+});
 //# sourceMappingURL=StaticDataSheetGrid.js.map

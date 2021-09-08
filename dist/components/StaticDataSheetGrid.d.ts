@@ -1,4 +1,6 @@
-/// <reference types="react" />
-import { DataSheetGridProps } from '../types';
-export declare const StaticDataSheetGrid: <T extends unknown>({ columns, gutterColumn, stickyRightColumn, addRowsComponent, createRow, duplicateRow, isRowEmpty, ...rest }: DataSheetGridProps<T>) => JSX.Element;
+import { DataSheetGridProps, DataSheetGridRef } from '../types';
+import React from 'react';
+export declare const StaticDataSheetGrid: <T extends unknown>(props: DataSheetGridProps<T> & {
+    ref?: React.ForwardedRef<DataSheetGridRef> | undefined;
+}) => JSX.Element;
 //# sourceMappingURL=StaticDataSheetGrid.d.ts.map

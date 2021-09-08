@@ -111,6 +111,7 @@ var useDebounceState_1 = require("../hooks/useDebounceState");
 var fast_deep_equal_1 = __importDefault(require("fast-deep-equal"));
 var ContextMenu_1 = require("./ContextMenu");
 var copyPasting_1 = require("../utils/copyPasting");
+var typeCheck_1 = require("../utils/typeCheck");
 var DEFAULT_DATA = [];
 var DEFAULT_COLUMNS = [];
 var DEFAULT_CREATE_ROW = function () { return ({}); };
@@ -123,7 +124,7 @@ var DEFAULT_IS_ROW_EMPTY = function (_a) {
     var rowData = _a.rowData;
     return Object.values(rowData).every(function (value) { return !value; });
 };
-exports.DataSheetGrid = react_1.default.memo(function (_a) {
+exports.DataSheetGrid = react_1.default.memo(react_1.default.forwardRef(function (_a, ref) {
     var _b, _c, _d, _e;
     var _f = _a.data, data = _f === void 0 ? DEFAULT_DATA : _f, _g = _a.height, maxHeight = _g === void 0 ? 400 : _g, _h = _a.onChange, onChange = _h === void 0 ? DEFAULT_ON_CHANGE : _h, _j = _a.columns, rawColumns = _j === void 0 ? DEFAULT_COLUMNS : _j, _k = _a.rowHeight, rowHeight = _k === void 0 ? 40 : _k, _l = _a.headerRowHeight, headerRowHeight = _l === void 0 ? rowHeight : _l, gutterColumn = _a.gutterColumn, stickyRightColumn = _a.stickyRightColumn, _m = _a.addRowsComponent, AddRowsComponent = _m === void 0 ? AddRows_1.AddRows : _m, _o = _a.createRow, createRow = _o === void 0 ? DEFAULT_CREATE_ROW : _o, _p = _a.autoAddRow, autoAddRow = _p === void 0 ? false : _p, _q = _a.lockRows, lockRows = _q === void 0 ? false : _q, _r = _a.duplicateRow, duplicateRow = _r === void 0 ? DEFAULT_DUPLICATE_ROW : _r, _s = _a.isRowEmpty, isRowEmpty = _s === void 0 ? DEFAULT_IS_ROW_EMPTY : _s, _t = _a.contextMenuComponent, ContextMenuComponent = _t === void 0 ? ContextMenu_1.ContextMenu : _t, _u = _a.disableContextMenu, disableContextMenuRaw = _u === void 0 ? false : _u;
     var disableContextMenu = disableContextMenuRaw || lockRows;
@@ -299,7 +300,9 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
             // Align right
             var leftMin = columnRights[cell.col] +
                 columnWidths[cell.col + 1] +
-                (hasStickyRightColumn ? columnWidths[columnWidths.length - 1] : 0) -
+                (hasStickyRightColumn
+                    ? columnWidths[columnWidths.length - 1]
+                    : 0) -
                 width +
                 1;
             var scrollLeft = outerRef.current.scrollLeft;
@@ -454,7 +457,9 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
                 case 0:
                     if (!(!editing && activeCell)) return [3 /*break*/, 15];
                     clipBoardData = (_f = (_e = event.clipboardData) === null || _e === void 0 ? void 0 : _e.getData('text')) !== null && _f !== void 0 ? _f : (_g = event.clipboardData) === null || _g === void 0 ? void 0 : _g.getData('text/plain');
-                    pasteData = clipBoardData ? copyPasting_1.parseData2(clipBoardData) : [];
+                    pasteData = typeof clipBoardData === 'string'
+                        ? copyPasting_1.parseData2(clipBoardData)
+                        : [['']];
                     min = (selection === null || selection === void 0 ? void 0 : selection.min) || activeCell;
                     max = (selection === null || selection === void 0 ? void 0 : selection.max) || activeCell;
                     if (!(pasteData.length === 1)) return [3 /*break*/, 7];
@@ -620,7 +625,8 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
         if (rightClick && !disableContextMenu) {
             setContextMenu({ x: event.clientX, y: event.clientY });
         }
-        if (!(event.shiftKey && activeCell) || rightClick) {
+        if ((!(event.shiftKey && activeCell) || rightClick) &&
+            data.length > 0) {
             setActiveCell(cursorIndex && {
                 col: (rightClickInSelection || rightClickOnSelectedHeaders) &&
                     activeCell
@@ -793,7 +799,7 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
             !event.altKey &&
             !event.shiftKey) {
             setSelectionCell(null);
-            if (editing) {
+            if (editing || isCellDisabled(activeCell)) {
                 if (!columns[activeCell.col + 1].disableKeys) {
                     stopEditing();
                 }
@@ -996,6 +1002,24 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
         getContextMenuItems: getContextMenuItems,
     });
     var itemSize = react_1.useCallback(function (index) { return (index === 0 ? headerRowHeight : rowHeight); }, [headerRowHeight, rowHeight]);
+    react_1.useImperativeHandle(ref, function () { return ({
+        activeCell: activeCell,
+        selection: selection !== null && selection !== void 0 ? selection : (activeCell ? { min: activeCell, max: activeCell } : null),
+        setSelection: function (value) {
+            var selection = typeCheck_1.getSelection(value, columns.length - (hasStickyRightColumn ? 2 : 1), data.length);
+            setActiveCell((selection === null || selection === void 0 ? void 0 : selection.min) || null);
+            setEditing(false);
+            setSelectionMode({ columns: false, active: false, rows: false });
+            setSelectionCell((selection === null || selection === void 0 ? void 0 : selection.max) || null);
+        },
+        setActiveCell: function (value) {
+            var cell = typeCheck_1.getCell(value, columns.length - (hasStickyRightColumn ? 2 : 1), data.length);
+            setActiveCell(cell);
+            setEditing(false);
+            setSelectionMode({ columns: false, active: false, rows: false });
+            setSelectionCell(null);
+        },
+    }); });
     return (react_1.default.createElement("div", null,
         react_1.default.createElement("div", { tabIndex: rawColumns.length && data.length ? 0 : undefined, onFocus: function (e) {
                 e.target.blur();
@@ -1016,7 +1040,7 @@ exports.DataSheetGrid = react_1.default.memo(function (_a) {
             } }),
         !lockRows && (react_1.default.createElement(AddRowsComponent, { addRows: function (count) { return insertRowAfter(data.length - 1, count); } })),
         contextMenu && contextMenuItems.length > 0 && (react_1.default.createElement(ContextMenuComponent, { clientX: contextMenu.x, clientY: contextMenu.y, items: contextMenuItems, close: function () { return setContextMenu(null); } }))));
-});
+}));
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 exports.DataSheetGrid.displayName = 'DataSheetGrid';
