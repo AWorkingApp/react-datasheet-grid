@@ -35,8 +35,10 @@ import { AddRows } from './AddRows'
 import { useDebounceState } from '../hooks/useDebounceState'
 import deepEqual from 'fast-deep-equal'
 import { ContextMenu } from './ContextMenu'
-import { parseData2 } from '../utils/copyPasting'
+import { parseData2, parseTextHtmlData } from '../utils/copyPasting'
 import { getCell, getSelection } from '../utils/typeCheck'
+import { encode as encodeHtml } from 'html-entities'
+import { getAllTabbableElements } from '../utils/tab'
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any>[] = []
@@ -45,15 +47,15 @@ const DEFAULT_ON_CHANGE: DataSheetGridProps<any>['onChange'] = () => null
 const DEFAULT_DUPLICATE_ROW: DataSheetGridProps<any>['duplicateRow'] = ({
   rowData,
 }) => ({ ...rowData })
-const DEFAULT_IS_ROW_EMPTY: DataSheetGridProps<any>['isRowEmpty'] = ({
-  rowData,
-}) => Object.values(rowData).every((value) => !value)
 
+// eslint-disable-next-line react/display-name
 export const DataSheetGrid = React.memo(
   React.forwardRef<DataSheetGridRef, DataSheetGridProps<any>>(
     <T extends any>(
       {
         data = DEFAULT_DATA,
+        className,
+        style,
         height: maxHeight = 400,
         onChange = DEFAULT_ON_CHANGE,
         columns: rawColumns = DEFAULT_COLUMNS,
@@ -66,7 +68,6 @@ export const DataSheetGrid = React.memo(
         autoAddRow = false,
         lockRows = false,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
-        isRowEmpty = DEFAULT_IS_ROW_EMPTY,
         contextMenuComponent: ContextMenuComponent = ContextMenu,
         disableContextMenu: disableContextMenuRaw = false,
       }: DataSheetGridProps<T>,
@@ -78,6 +79,8 @@ export const DataSheetGrid = React.memo(
       const listRef = useRef<VariableSizeList>(null)
       const innerRef = useRef<HTMLElement>(null)
       const outerRef = useRef<HTMLElement>(null)
+      const beforeTabIndexRef = useRef<HTMLDivElement>(null)
+      const afterTabIndexRef = useRef<HTMLDivElement>(null)
 
       useEffect(() => {
         listRef.current?.resetAfterIndex(0)
@@ -241,7 +244,10 @@ export const DataSheetGrid = React.memo(
 
           return Boolean(
             typeof disabled === 'function'
-              ? disabled({ rowData: dataRef.current[cell.row] })
+              ? disabled({
+                  rowData: dataRef.current[cell.row],
+                  rowIndex: cell.row,
+                })
               : disabled
           )
         },
@@ -277,7 +283,9 @@ export const DataSheetGrid = React.memo(
             ...dataRef.current.slice(0, rowMax + 1),
             ...dataRef.current
               .slice(rowMin, rowMax + 1)
-              .map((rowData) => duplicateRow({ rowData })),
+              .map((rowData, i) =>
+                duplicateRow({ rowData, rowIndex: i + rowMin })
+              ),
             ...dataRef.current.slice(rowMax + 1),
           ])
           setActiveCell({ col: 0, row: rowMax + 1 })
@@ -418,7 +426,11 @@ export const DataSheetGrid = React.memo(
           if (
             data
               .slice(min.row, max.row + 1)
-              .every((rowData) => isRowEmpty({ rowData }))
+              .every((rowData, i) =>
+                columns.every((column) =>
+                  column.isCellEmpty({ rowData, rowIndex: i + min.row })
+                )
+              )
           ) {
             if (smartDelete) {
               deleteRows(min.row, max.row)
@@ -433,7 +445,10 @@ export const DataSheetGrid = React.memo(
               if (!isCellDisabled({ col, row })) {
                 const { deleteValue = ({ rowData }) => rowData } =
                   columns[col + 1]
-                newData[row] = deleteValue({ rowData: newData[row] })
+                newData[row] = deleteValue({
+                  rowData: newData[row],
+                  rowIndex: row,
+                })
               }
             }
           }
@@ -455,7 +470,6 @@ export const DataSheetGrid = React.memo(
           data,
           deleteRows,
           isCellDisabled,
-          isRowEmpty,
           onChange,
           selection?.max,
           selection?.min,
@@ -496,13 +510,32 @@ export const DataSheetGrid = React.memo(
 
               for (let col = min.col; col <= max.col; ++col) {
                 const { copyValue = () => null } = columns[col + 1]
-                copyData[row - min.row].push(copyValue({ rowData: data[row] }))
+                copyData[row - min.row].push(
+                  copyValue({ rowData: data[row], rowIndex: row })
+                )
               }
             }
 
             event.clipboardData?.setData(
               'text/plain',
               copyData.map((row) => row.join('\t')).join('\n')
+            )
+            event.clipboardData?.setData(
+              'text/html',
+              `<table>${copyData
+                .map(
+                  (row) =>
+                    `<tr>${row
+                      .map(
+                        (cell) =>
+                          `<td>${encodeHtml(String(cell ?? '')).replace(
+                            /\n/g,
+                            '<br/>'
+                          )}</td>`
+                      )
+                      .join('')}</tr>`
+                )
+                .join('')}</table>`
             )
             event.preventDefault()
           }
@@ -526,14 +559,21 @@ export const DataSheetGrid = React.memo(
       const onPaste = useCallback(
         async (event: ClipboardEvent) => {
           if (!editing && activeCell) {
-            const clipBoardData =
-              event.clipboardData?.getData('text') ??
-              event.clipboardData?.getData('text/plain')
+            let pasteData = [['']]
 
-            const pasteData =
-              typeof clipBoardData === 'string'
-                ? parseData2(clipBoardData)
-                : [['']]
+            if (event.clipboardData?.types.includes('text/html')) {
+              pasteData = parseTextHtmlData(
+                event.clipboardData?.getData('text/html')
+              )
+            } else if (event.clipboardData?.types.includes('text/plain')) {
+              pasteData = parseData2(
+                event.clipboardData?.getData('text/plain')
+              )
+            } else if (event.clipboardData?.types.includes('text')) {
+              pasteData = parseData2(
+                event.clipboardData?.getData('text')
+              )
+            }
 
             const min: Cell = selection?.min || activeCell
             const max: Cell = selection?.max || activeCell
@@ -565,6 +605,7 @@ export const DataSheetGrid = React.memo(
                       newData[rowIndex] = await pasteValue({
                         rowData: newData[rowIndex],
                         value: pasteData[0][columnIndex],
+                        rowIndex,
                       })
                     }
                   }
@@ -618,6 +659,7 @@ export const DataSheetGrid = React.memo(
                       newData[min.row + rowIndex] = await pasteValue({
                         rowData: newData[min.row + rowIndex],
                         value: pasteData[rowIndex][columnIndex],
+                        rowIndex: min.row + rowIndex,
                       })
                     }
                   }
@@ -889,6 +931,55 @@ export const DataSheetGrid = React.memo(
       const onKeyDown = useCallback(
         (event: KeyboardEvent) => {
           if (!activeCell) {
+            return
+          }
+
+          // Tab from last cell
+          if (
+            event.key === 'Tab' &&
+            !event.shiftKey &&
+            activeCell.col ===
+              columns.length - (hasStickyRightColumn ? 3 : 2) &&
+            activeCell.row === data.length - 1 &&
+            afterTabIndexRef.current &&
+            !columns[activeCell.col + 1].disableKeys
+          ) {
+            event.preventDefault()
+
+            setActiveCell(null)
+            setSelectionCell(null)
+            setEditing(false)
+
+            const allElements = getAllTabbableElements()
+            const index = allElements.indexOf(afterTabIndexRef.current)
+
+            allElements[(index + 1) % allElements.length].focus()
+
+            return
+          }
+
+          // Shift+Tab from first cell
+          if (
+            event.key === 'Tab' &&
+            event.shiftKey &&
+            activeCell.col === 0 &&
+            activeCell.row === 0 &&
+            beforeTabIndexRef.current &&
+            !columns[activeCell.col + 1].disableKeys
+          ) {
+            event.preventDefault()
+
+            setActiveCell(null)
+            setSelectionCell(null)
+            setEditing(false)
+
+            const allElements = getAllTabbableElements()
+            const index = allElements.indexOf(beforeTabIndexRef.current)
+
+            allElements[
+              (index - 1 + allElements.length) % allElements.length
+            ].focus()
+
             return
           }
 
@@ -1203,7 +1294,8 @@ export const DataSheetGrid = React.memo(
           const selection = getSelection(
             value,
             columns.length - (hasStickyRightColumn ? 2 : 1),
-            data.length
+            data.length,
+            columns
           )
 
           setActiveCell(selection?.min || null)
@@ -1215,7 +1307,8 @@ export const DataSheetGrid = React.memo(
           const cell = getCell(
             value,
             columns.length - (hasStickyRightColumn ? 2 : 1),
-            data.length
+            data.length,
+            columns
           )
 
           setActiveCell(cell)
@@ -1226,8 +1319,9 @@ export const DataSheetGrid = React.memo(
       }))
 
       return (
-        <div>
+        <div className={className} style={style}>
           <div
+            ref={beforeTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
             onFocus={(e) => {
               e.target.blur()
@@ -1256,6 +1350,7 @@ export const DataSheetGrid = React.memo(
             </SelectionContext.Provider>
           </HeaderContext.Provider>
           <div
+            ref={afterTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
             onFocus={(e) => {
               e.target.blur()

@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import {
   checkboxColumn,
+  Column,
   DataSheetGrid,
   keyColumn,
   textColumn,
-  Column,
 } from 'react-datasheet-grid'
 import './style.css'
 
@@ -29,7 +29,10 @@ function App() {
     {
       ...keyColumn<Row, 'firstName'>('firstName', textColumn),
       disabled: ({ rowData }) => {
-        return rowData.disabled;
+        if(!rowData) {
+          return false
+        }
+        return rowData && rowData.disabled
       },
       title: 'First name',
     },
